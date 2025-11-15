@@ -18,13 +18,19 @@ This is achieved using a decoupled, asynchronous architecture. The "Ingestion" A
 ## Features
 
 - **Asynchronous Ingestion:** The `POST /api/ingestion/event` endpoint is lightning-fast. It validates the request with Zod, adds the job to a BullMQ queue, and returns a `202 Accepted` response.
+  
 - **Decoupled Services:** The system is split into two primary services :
   1.  `app`: A stateless Express server that runs the "Ingestion" and "Reporting" APIs.
   2.  `worker`: A background service that runs the "Processor", listening for jobs from the queue and writing them to the database.
+     
 - **Type-Safe & Robust:** The project uses **Zod** for schema-based validation on all incoming requests (both body and query params) and a global error handler for predictable, clean error responses.
+  
 - **Efficient Aggregation:** The `GET /api/reporting/stats` endpoint performs all database aggregations in a single, parallel `prisma.$transaction` call. This efficiently gathers total views, unique users, and top paths in one database round-trip.
+  
 - **Idempotent Worker:** The processor is designed to be idempotent. It leverages a `@@unique` constraint in the database and catches the `P2002` (unique constraint violation) error to safely skip processing duplicate jobs that may have been queued more than once.
+  
 - **Fully Containerized:** The entire application stack (app, worker, db, redis) is defined in `docker-compose.yml` for production and `docker-compose.dev.yml` for a hot-reloading development environment.
+  
 - **Optimized Production Image:** The `Dockerfile` uses a multi-stage build to create a small, secure, and optimized production image that contains _only_ the compiled JavaScript and production dependencies.
 
 ---
@@ -46,7 +52,7 @@ The primary requirement is that the ingestion endpoint (`POST /event`) must be "
 
 ## **Why BullMQ + Redis?**
 
-- **Speed:** BullMQ is built on Redis, which is an in-memory data store, making the queue-add operation (the only thing the client waits for) incredibly fast.
+- **Speed:** BullMQ is built on Redis, which is an in-memory data store, making the queue-add operation incredibly fast.
 - **Reliability & Persistence:** Unlike a simple message broker, BullMQ is a job queue. If the `worker` service crashes, the jobs are safely persisted in Redis, ready to be processed when the worker restarts.
 - **Scalability:** This architecture is highly scalable. If job ingestion outpaces processing, we can simply scale the `worker` service by running more `worker` containers to process jobs in parallel. The `worker.ts` file is already configured with a concurrency of 50, meaning it can process 50 database writes concurrently.
 - **Advanced Features:** BullMQ provides job retries with exponential backoff out of the box, which is essential for a robust system.
