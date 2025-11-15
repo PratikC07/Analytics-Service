@@ -10,5 +10,13 @@ COPY package.json package-lock.json ./
 # Install all dependencies (including devDependencies like nodemon, tsx)
 RUN npm install
 
+# # Copy the prisma schema
+# COPY prisma/schema.prisma ./prisma/
+
+COPY prisma.config.ts ./
+
+# # NOW, explicitly generate the client. This builds it inside the image's node_modules
+# RUN npx prisma generate
+
 # By default, run the dev command
 CMD ["npm", "run", "dev"]

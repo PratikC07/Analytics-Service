@@ -22,6 +22,26 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    command: npm run dev
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    env_file:
+      - .env.docker
+    networks:
+      - analytics-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # This service runs our new worker script
+    command: npm run dev:worker
 
   # This is our existing DB service
   db:

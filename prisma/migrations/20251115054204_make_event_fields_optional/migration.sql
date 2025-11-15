@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Event" ALTER COLUMN "path" DROP NOT NULL,
+ALTER COLUMN "user_id" DROP NOT NULL;

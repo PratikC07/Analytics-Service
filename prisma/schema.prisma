@@ -18,10 +18,13 @@ model Event {
   id          String   @id @default(uuid())
   site_id     String
   event_type  String
-  path        String
-  user_id     String
+  path        String?
+  user_id     String?
   timestamp   DateTime
   inserted_at DateTime @default(now())
 
   @@index([site_id, event_type, timestamp])
+
+  // A single user cannot be in the same path at the exact same millisecond.
+  @@unique([site_id, user_id, path, timestamp])
 }
