@@ -1,4 +1,6 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Worker } from "bullmq";
 import prisma from "./lib/prisma.js";
 import { processAnalyticsJob } from "./modules/processor/analytics.processor.js";

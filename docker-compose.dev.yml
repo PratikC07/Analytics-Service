@@ -1,26 +1,36 @@
 services:
+  # This is our new Node.js application service
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
+    # Mount our local source code directly into the container
+    # This is how nodemon sees our changes!
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    # Tell Docker Compose to use our new .env.docker file
     env_file:
       - .env
     networks:
       - analytics-network
+    # Wait for db and redis to be healthy before starting
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # This command runs migrations first, then starts the app
-    command: sh -c "npm run migrate && npm run start"
+    command: npm run dev
 
   worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
     env_file:
       - .env
     networks:
@@ -30,11 +40,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # This service runs our new worker start script
-    command: npm run start:worker
+    # This service runs our new worker script
+    command: npm run dev:worker
 
-  # DB and Redis services are often managed externally in real prod,
-  # but including them here is fine for a complete setup.
+  # This is our existing DB service
   db:
     image: postgres:16
     ports:
@@ -54,6 +63,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # This is our existing Redis service
   redis:
     image: redis:7-alpine
     ports:
