@@ -1,0 +1,14 @@
+# Use a lean Node.js image
+FROM node:20-alpine
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy ONLY the package files to leverage Docker's cache
+COPY package.json package-lock.json ./
+
+# Install all dependencies (including devDependencies like nodemon, tsx)
+RUN npm install
+
+# By default, run the dev command
+CMD ["npm", "run", "dev"]

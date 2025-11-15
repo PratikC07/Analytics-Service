@@ -1,0 +1,64 @@
+services:
+  # This is our new Node.js application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    # Mount our local source code directly into the container
+    # This is how nodemon sees our changes!
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    # Tell Docker Compose to use our new .env.docker file
+    env_file:
+      - .env.docker
+    networks:
+      - analytics-network
+    # Wait for db and redis to be healthy before starting
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # This is our existing DB service
+  db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=analytics_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - analytics-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # This is our existing Redis service
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - analytics-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  analytics-network:
